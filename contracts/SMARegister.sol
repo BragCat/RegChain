@@ -31,28 +31,48 @@ contract SMARegister {
     }
 
     address public owner;
-    ASUpdateMsg[] private app_queue;
-    mapping (uint256 => ASInfo) private as_queue;
-    uint256[] asn_queue;
+    mapping(address => ASUpdateMsg) private app_queue;
+    mapping(address => ASInfo) private as_queue;
+    address[] app_queue_ids;
+    address[] as_queue_ids;
+    mapping(uint256 => address) asn2id;
 
     constructor() public {
         owner = msg.sender;
     }
 
     function ASUpdate(UpdateType _update_type, uint256 _asn, string memory _acs_addr, uint256 _effect_time) public {
-        ASUpdateMsg memory as_update_msg = ASUpdateMsg(_update_type, _asn, _acs_addr, _effect_time);
-        app_queue.push(as_update_msg);
+        require(_asn != 0, "AS number should not be 0!");
+        ASInfo storage as_info = as_queue[msg.sender];
+        ASUpdateMsg storage as_update_msg = app_queue[msg.sender];
+        // This address has registered a AS number
+        if (as_info.asn != 0) {
+            require(_asn == as_info.asn, "AS number should match!");
+        }
+        // This address has not propose an application
+        if (as_update_msg.asn == 0) {
+            app_queue_ids.push(msg.sender);
+        }
+        as_update_msg.update_type = _update_type;
+        as_update_msg.asn = _asn;
+        as_update_msg.acs_addr = _acs_addr;
+        as_update_msg.effect_time = _effect_time;
     }
+
     function UpdateQuery() public view returns (ASUpdateMsg[] memory apps) {
-        return app_queue;
+        apps = new ASUpdateMsg[](app_queue_ids.length);
+        for (uint i = 0; i < app_queue_ids.length; ++i) {
+            apps[i] = app_queue[app_queue_ids[i]];
+        }
+        return apps;
     }
-    function UpdateApprove(uint256 asn) public onlyOwner {
-        ASUpdateMsg memory as_update_msg = RemoveFromAppQueue(asn);
-        ASInfo storage as_info = as_queue[as_update_msg.asn];
-        if (as_info.asn == asn) {
+
+    function UpdateApprove(address id) public onlyOwner {
+        ASUpdateMsg memory as_update_msg = RemoveFromAppQueue(id);
+        ASInfo storage as_info = as_queue[id];
+        if (as_info.asn != 0) {
             if (as_update_msg.update_type == UpdateType.Delete) {
-                as_info.asn = 0;
-                RemoveFromASNQueue(asn);
+                RemoveFromASQueue(id);
             } else {
                 AddrTimePair[] storage acs_list = as_info.acs_list;
                 uint n = acs_list.length;
@@ -73,16 +93,23 @@ contract SMARegister {
             if (as_update_msg.update_type == UpdateType.Delete) {
                 return;
             }
-            as_info.asn = asn;
+            as_info.asn = as_update_msg.asn;
             as_info.acs_list.push(AddrTimePair(as_update_msg.acs_addr, as_update_msg.effect_time));
-            asn_queue.push(asn);
+            as_queue_ids.push(id);
+            asn2id[as_info.asn] = id;
         }
     }
-    function UpdateReject(uint256 asn) public onlyOwner {
-        RemoveFromAppQueue(asn);
+
+    function UpdateReject(address id) public onlyOwner {
+        RemoveFromAppQueue(id);
     }
+
     function QueryAS(uint256 asn, uint256 time) public view returns(string memory) {
-        ASInfo storage as_info = as_queue[asn];
+        address id = asn2id[asn];
+        if (id == address(0)) {
+            return "";
+        }
+        ASInfo storage as_info = as_queue[id];
         require(as_info.asn != 0, "There is no such AS recorded.");
         uint n = as_info.acs_list.length;
         for (uint i = 0; i < n - 1; ++i) {
@@ -92,11 +119,12 @@ contract SMARegister {
         }
         return as_info.acs_list[n - 1].acs_addr;
     }
+
     function QueryAllAS(uint256 time) public view returns(ASNAddr[] memory) {
-        ASNAddr[] memory addrs = new ASNAddr[](asn_queue.length);
-        for (uint i = 0; i < asn_queue.length; ++i) {
-            addrs[i].asn = asn_queue[i];
-            ASInfo storage as_info = as_queue[asn_queue[i]];
+        ASNAddr[] memory addrs = new ASNAddr[](as_queue_ids.length);
+        for (uint i = 0; i < as_queue_ids.length; ++i) {
+            address id = as_queue_ids[i];
+            ASInfo storage as_info = as_queue[id];
             require(as_info.asn != 0, "There is no such AS recorded.");
             require(as_info.acs_list[0].effect_time <= time, "The time is prior to the earliest effect time.");
             uint n = as_info.acs_list.length;
@@ -116,35 +144,50 @@ contract SMARegister {
     }
 
 
-    function RemoveFromAppQueue(uint256 asn) private returns (ASUpdateMsg memory as_update_msg){
-        uint n = app_queue.length;
+    function RemoveFromAppQueue(address id) private returns (ASUpdateMsg memory as_update_msg){
+        as_update_msg = app_queue[id];
+        if (app_queue[id].asn == 0) {
+            return as_update_msg;
+        }
+        app_queue[id].asn = 0;
+        uint n = app_queue_ids.length;
         uint index = n;
         for (uint i = 0; i < n; ++i) {
-            if (app_queue[i].asn == asn) {
+            if (app_queue_ids[i] == id) {
                 index = i;
                 break;
             }
         }
-        assert(index < n);
-        as_update_msg = app_queue[index];
-        for (uint i = index; i < n - 1; ++i) {
-            app_queue[i] = app_queue[i + 1];
+        if (index == n) {
+            return as_update_msg;
         }
-        app_queue.pop();
+        for (uint i = index; i < n - 1; ++i) {
+            app_queue_ids[i] = app_queue_ids[i + 1];
+        }
+        app_queue_ids.pop();
     }
-    function RemoveFromASNQueue(uint256 asn) private {
-        uint n = asn_queue.length;
+
+    function RemoveFromASQueue(address id) private {
+        uint256 asn = as_queue[id].asn;
+        if (asn == 0) {
+            return;
+        }
+        asn2id[asn] = address(0);
+        as_queue[id].asn = 0;
+        uint n = as_queue_ids.length;
         uint index = n;
         for (uint i = 0; i < n; ++i) {
-            if (asn_queue[i] == asn) {
+            if (as_queue_ids[i] == id) {
                 index = i;
                 break;
             }
         }
-        assert(index < n);
-        for (uint i = index; i < n - 1; ++i) {
-            asn_queue[i] = asn_queue[i + 1];
+        if (index == n) {
+            return;
         }
-        asn_queue.pop();
+        for (uint i = index; i < n - 1; ++i) {
+            as_queue_ids[i] = as_queue_ids[i + 1];
+        }
+        as_queue_ids.pop();
     }
 }
