@@ -8,12 +8,14 @@ contract SMARegister {
         uint256 effect_time;
     }
     struct ASUpdateMsg {
+        address id;
         UpdateType update_type;
         uint256 asn;
         string acs_addr;
         uint256 effect_time;
     }
     struct ASInfo {
+        address id;
         uint256 asn;
         AddrTimePair[] acs_list;
     }
@@ -30,29 +32,47 @@ contract SMARegister {
         _;
     }
 
+    string constant NONEXISTENT_ACS_ADDR = "";
+
+    // const used for AS existence check
+    address constant UNSET_ID = address(0);
+    uint256 constant UNSET_ASN = 0;
+
+    // administrator address of security aliance
     address public owner;
+    // AS update application map
     mapping(address => ASUpdateMsg) private app_queue;
+    // AS Info map
     mapping(address => ASInfo) private as_queue;
+    // id list of current ASes in application map
     address[] app_queue_ids;
+    // id list of current ASes in security aliance
     address[] as_queue_ids;
+
+    // binding relations from asn to id, once added, never deleted
     mapping(uint256 => address) asn2id;
+    // binding relations from id to asn, once added, never deleted
+    mapping(address => uint256) id2asn;
 
     constructor() public {
         owner = msg.sender;
     }
 
     function ASUpdate(UpdateType _update_type, uint256 _asn, string memory _acs_addr, uint256 _effect_time) public {
-        require(_asn != 0, "AS number should not be 0!");
-        ASInfo storage as_info = as_queue[msg.sender];
-        ASUpdateMsg storage as_update_msg = app_queue[msg.sender];
-        // This address has registered a AS number
-        if (as_info.asn != 0) {
-            require(_asn == as_info.asn, "AS number should match!");
+        address id = msg.sender;
+        uint256 expected_asn = id2asn[id];
+        ASUpdateMsg storage as_update_msg = app_queue[id];
+        // check if this address has registered a AS number
+        if (expected_asn != UNSET_ASN) {
+            require(_asn == expected_asn, "AS number should match!");
+        } else {
+            require(asn2id[_asn] == UNSET_ID, "AS number should not be registered!");
         }
-        // This address has not propose an application
-        if (as_update_msg.asn == 0) {
-            app_queue_ids.push(msg.sender);
+        // This address has not proposed an application
+        if (as_update_msg.id == UNSET_ID) {
+            app_queue_ids.push(id);
         }
+        as_update_msg.id = id;
         as_update_msg.update_type = _update_type;
         as_update_msg.asn = _asn;
         as_update_msg.acs_addr = _acs_addr;
@@ -70,7 +90,8 @@ contract SMARegister {
     function UpdateApprove(address id) public onlyOwner {
         ASUpdateMsg memory as_update_msg = RemoveFromAppQueue(id);
         ASInfo storage as_info = as_queue[id];
-        if (as_info.asn != 0) {
+        // check if the AS is in the security aliance now
+        if (as_info.id != UNSET_ID) {
             if (as_update_msg.update_type == UpdateType.Delete) {
                 RemoveFromASQueue(id);
             } else {
@@ -93,10 +114,12 @@ contract SMARegister {
             if (as_update_msg.update_type == UpdateType.Delete) {
                 return;
             }
+            as_info.id = id;
             as_info.asn = as_update_msg.asn;
             as_info.acs_list.push(AddrTimePair(as_update_msg.acs_addr, as_update_msg.effect_time));
             as_queue_ids.push(id);
             asn2id[as_info.asn] = id;
+            id2asn[id] = as_info.asn;
         }
     }
 
@@ -104,13 +127,15 @@ contract SMARegister {
         RemoveFromAppQueue(id);
     }
 
-    function QueryAS(uint256 asn, uint256 time) public view returns(string memory) {
+    function SingleACSQuery(uint256 asn, uint256 time) public view returns(string memory) {
         address id = asn2id[asn];
-        if (id == address(0)) {
-            return "";
+        if (id == UNSET_ID) {
+            return NONEXISTENT_ACS_ADDR;
         }
         ASInfo storage as_info = as_queue[id];
-        require(as_info.asn != 0, "There is no such AS recorded.");
+        if (as_info.id == UNSET_ID) {
+            return NONEXISTENT_ACS_ADDR;
+        }
         uint n = as_info.acs_list.length;
         for (uint i = 0; i < n - 1; ++i) {
             if (as_info.acs_list[i].effect_time <= time && as_info.acs_list[i + 1].effect_time > time) {
@@ -120,24 +145,28 @@ contract SMARegister {
         return as_info.acs_list[n - 1].acs_addr;
     }
 
-    function QueryAllAS(uint256 time) public view returns(ASNAddr[] memory) {
+    function AllACSQuery(uint256 time) public view returns(ASNAddr[] memory) {
         ASNAddr[] memory addrs = new ASNAddr[](as_queue_ids.length);
         for (uint i = 0; i < as_queue_ids.length; ++i) {
             address id = as_queue_ids[i];
+            addrs[i].asn = id2asn[id];
             ASInfo storage as_info = as_queue[id];
-            require(as_info.asn != 0, "There is no such AS recorded.");
-            require(as_info.acs_list[0].effect_time <= time, "The time is prior to the earliest effect time.");
-            uint n = as_info.acs_list.length;
-            bool found = false;
-            for (uint j = 0; j < n - 1; ++j) {
-                if (as_info.acs_list[j].effect_time <= time && as_info.acs_list[j + 1].effect_time > time) {
-                    addrs[i].acs_addr = as_info.acs_list[j].acs_addr;
-                    found = true;
-                    break;
+            require(as_info.id != UNSET_ID, "The contract state is not consistent!");
+            if (as_info.acs_list[0].effect_time > time) {
+                addrs[i].acs_addr = NONEXISTENT_ACS_ADDR;
+            } else {
+                uint n = as_info.acs_list.length;
+                bool found = false;
+                for (uint j = 0; j < n - 1; ++j) {
+                    if (as_info.acs_list[j].effect_time <= time && as_info.acs_list[j + 1].effect_time > time) {
+                        addrs[i].acs_addr = as_info.acs_list[j].acs_addr;
+                        found = true;
+                        break;
+                    }
                 }
-            }
-            if (!found) {
-                addrs[i].acs_addr = as_info.acs_list[n - 1].acs_addr;
+                if (!found) {
+                    addrs[i].acs_addr = as_info.acs_list[n - 1].acs_addr;
+                }
             }
         }
         return addrs;
@@ -146,10 +175,8 @@ contract SMARegister {
 
     function RemoveFromAppQueue(address id) private returns (ASUpdateMsg memory as_update_msg){
         as_update_msg = app_queue[id];
-        if (app_queue[id].asn == 0) {
-            return as_update_msg;
-        }
-        app_queue[id].asn = 0;
+        require(as_update_msg.id != UNSET_ID, "The update application is invalid!");
+        app_queue[id].id = UNSET_ID;
         uint n = app_queue_ids.length;
         uint index = n;
         for (uint i = 0; i < n; ++i) {
@@ -158,22 +185,14 @@ contract SMARegister {
                 break;
             }
         }
-        if (index == n) {
-            return as_update_msg;
-        }
-        for (uint i = index; i < n - 1; ++i) {
-            app_queue_ids[i] = app_queue_ids[i + 1];
-        }
+        require(index < n, "The contract state is not consistent!");
+        app_queue_ids[index] = app_queue_ids[n - 1];
         app_queue_ids.pop();
     }
 
     function RemoveFromASQueue(address id) private {
-        uint256 asn = as_queue[id].asn;
-        if (asn == 0) {
-            return;
-        }
-        asn2id[asn] = address(0);
-        as_queue[id].asn = 0;
+        require(as_queue[id].id != UNSET_ID, "There is no such AS to be removed!");
+        as_queue[id].id = UNSET_ID;
         uint n = as_queue_ids.length;
         uint index = n;
         for (uint i = 0; i < n; ++i) {
@@ -182,12 +201,8 @@ contract SMARegister {
                 break;
             }
         }
-        if (index == n) {
-            return;
-        }
-        for (uint i = index; i < n - 1; ++i) {
-            as_queue_ids[i] = as_queue_ids[i + 1];
-        }
+        require(index < n, "The contract state is not consistent!");
+        as_queue_ids[index] = as_queue_ids[n - 1];
         as_queue_ids.pop();
     }
 }

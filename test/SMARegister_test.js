@@ -21,10 +21,10 @@ contract("SMARegister", accounts => {
     });
 
     describe("AS update apply", () => {
-        it("AS update apply function check", async() => {
+        it("UpdateApply function check", async() => {
             const old_app_queue = await SMARegister.UpdateQuery();
-            const old_length = old_app_queue.length;
-            const tx = await SMARegister.ASUpdate(
+            const old_app_queue_len = old_app_queue.length;
+            var tx = await SMARegister.ASUpdate(
                 update_type, 
                 asn, 
                 acs_addr, 
@@ -32,21 +32,21 @@ contract("SMARegister", accounts => {
                 {from: applicant}
                 );
             const new_app_queue = await SMARegister.UpdateQuery();
-            const new_length = new_app_queue.length;
-            assert.equal(new_length - old_length, 1, "Apply failed.");
-            assert.equal(new_app_queue[new_length - 1].asn, asn, "AS number should match.");
-            const duplicate_tx = await SMARegister.ASUpdate(
+            const new_app_queue_len = new_app_queue.length;
+            assert.equal(new_app_queue_len - old_app_queue_len, 1, "Apply failed.");
+            assert.equal(new_app_queue[new_app_queue_len - 1].asn, asn, "AS number should match.");
+            tx = await SMARegister.ASUpdate(
                 update_type,
                 asn,
                 acs_addr,
                 effect_time,
                 {from: applicant}
             );
-            const duplicate_new_app_queue = await SMARegister.UpdateQuery();
-            const duplicate_new_app_length = duplicate_new_app_queue.length;
-            assert.equal(new_length, duplicate_new_app_length, "Same AS can only apply once at a time."); 
+            const new_app_queue_again = await SMARegister.UpdateQuery();
+            const new_app_queue_len_again = new_app_queue_again.length;
+            assert.equal(new_app_queue_len, new_app_queue_len_again, "Same AS can only apply once at a time."); 
         });
-        it("ASUpdate function time tester", async() => {
+        it("ASUpdate time tester", async() => {
             const tx = await SMARegister.ASUpdate(
                 update_type, 
                 asn, 
@@ -55,42 +55,49 @@ contract("SMARegister", accounts => {
                 {from: applicant}
                 );
         });
-        it("UpdateQuery function time tester", async() => {
+    });
+
+    describe("Add all AS update application", () => {
+        it("Add all AS update application", async() => {
+            const n = accounts.length;
+            for (var i = 0; i < n; ++i) {
+                const tx = await SMARegister.ASUpdate(
+                    update_type, 
+                    asn + i,
+                    acs_addr,
+                    effect_time + i,
+                    {from: accounts[i]}
+                    );
+            }
+            const app_queue = await SMARegister.UpdateQuery();
+            const len = app_queue.length;
+            assert.equal(len, n, "The number of applications should equal to accounts' number.");
+        });
+    }); 
+
+    describe("AS update query", () => {
+        it("UpdateQuery time tester", async() => {
             const app_queue = await SMARegister.UpdateQuery();
         });
     });
 
-    describe("AS update application review", async() => {
-        it("AS update approve function check", async() => {
-            var tx = await SMARegister.ASUpdate(
-                update_type, 
-                asn, 
-                acs_addr, 
-                effect_time, 
-                {from: applicant}
-                );
+    describe("AS update application review", () => {
+        it("UpdateApprove function check", async() => {
             const old_app_queue = await SMARegister.UpdateQuery();
             const old_app_cnt = old_app_queue.length;
             tx = await SMARegister.UpdateApprove(
-                applicant,
+                accounts[0],
                 {from: admin}
                 );
             const new_app_queue = await SMARegister.UpdateQuery();
             const new_app_cnt = new_app_queue.length;
-            assert(old_app_cnt - new_app_cnt, 1, "Application should decrement by 1.");
+            assert.equal(old_app_cnt - new_app_cnt, 1, "Application should decrement by 1.");
         });
 
-        it("AS update approve authority check", async() => {
-            var tx = await SMARegister.ASUpdate(
-                update_type, 
-                asn, 
-                acs_addr, 
-                effect_time, 
-                {from: applicant}
-                );
+        it("UpdateApprove authority check", async() => {
             try{
                 tx = await SMARegister.UpdateApprove(
-                    applicant,
+                    accounts[1],
                     {from: applicant}
                     );
                 assert.fail("UpdateApprove call should fail.");
@@ -98,43 +105,29 @@ contract("SMARegister", accounts => {
             }
         });
 
-        it("AS update approve time tester", async() => {
+        it("UpdateApprove time tester", async() => {
            var tx = await SMARegister.UpdateApprove(
-                    applicant,
+                    accounts[1],
                     {from: admin}
                     ); 
         });
 
-        it("AS update reject function check", async() => {
-            var tx = await SMARegister.ASUpdate(
-                update_type, 
-                asn, 
-                acs_addr, 
-                effect_time, 
-                {from: applicant}
-                );
+        it("UpdateReject function check", async() => {
             const old_app_queue = await SMARegister.UpdateQuery();
             const old_app_cnt = old_app_queue.length;
             tx = await SMARegister.UpdateReject(
-                applicant,
+                accounts[2],
                 {from: admin}
                 );
             const new_app_queue = await SMARegister.UpdateQuery();
             const new_app_cnt = new_app_queue.length;
-            assert(old_app_cnt - new_app_cnt, 1, "Application should decrement by 1.");
+            assert.equal(old_app_cnt - new_app_cnt, 1, "Application should decrement by 1.");
         });
 
-        it("AS update reject authority check", async() => {
-            var tx = await SMARegister.ASUpdate(
-                update_type, 
-                asn, 
-                acs_addr, 
-                effect_time, 
-                {from: applicant}
-                );
+        it("UpdateReject authority check", async() => {
             try{
                 tx = await SMARegister.UpdateReject(
-                    applicant,
+                    accounts[3],
                     {from: applicant}
                     );
                 assert.fail("UpdateApprove call should fail.");
@@ -142,15 +135,64 @@ contract("SMARegister", accounts => {
             }
         });
 
-        it("AS update reject time tester", async() => {
+        it("UpdateReject time tester", async() => {
            var tx = await SMARegister.UpdateReject(
-                    applicant,
+                    accounts[3],
                     {from: admin}
                     ); 
         });
     });
 
-    describe("AS query", () => {
-        
+    describe("Approve all AS update application", () => {
+        it("Approve all AS update application", async() => {
+            const app_queue = await SMARegister.UpdateQuery();
+            const app_queue_len = app_queue.length;
+            for (var i = 0; i < app_queue_len; ++i) {
+                const tx = await SMARegister.UpdateApprove(
+                    app_queue[i].id,
+                    {from: admin}
+                    );
+            }
+        });
+    });
+
+    describe("ACS query", () => {
+        it("SingleACSQuery function check", async() => {
+            var addr = await SMARegister.SingleACSQuery(
+                asn, 
+                effect_time + 100,
+                {from: applicant}
+                );
+            assert.equal(addr, acs_addr, "ACS address should match.");
+            addr = await SMARegister.SingleACSQuery(
+                0,
+                effect_time + 100,
+                {from: applicant}
+            );
+            assert.equal(addr, "", "ACS address should not exist.");
+        });
+        it("SingleACSQuery time tester", async() => {
+            const addr = await SMARegister.SingleACSQuery(
+                asn, 
+                effect_time + 100,
+                {from: applicant}
+                );
+        });
+        it("AllACSQuery function check", async() => {
+            const acs_list = await SMARegister.AllACSQuery(
+                effect_time + 100,
+                {from: applicant}
+                );
+            const n = acs_list.length;
+            for (var i = 0; i < n; ++i) {
+                assert.equal(acs_list[i].acs_addr, acs_addr, "ACS address hould match.");
+            }
+        });
+        it("AllACSQuery time tester", async() => {
+            const acs_list = await SMARegister.AllACSQuery(
+                effect_time + 100,
+                {from: applicant}
+                );
+        });
     });
 });
