@@ -1,10 +1,12 @@
 import React from 'react';
 
 const Home = (props) => {
-    console.log(props.eth.accounts[0]);
+    const web3 = props.eth.web3;
+    const accounts = props.eth.accounts;
+    const contract = props.eth.contract; 
+
     return (
         <div><h2>AS Update Requests:</h2></div>
-        
     );
 }
 
