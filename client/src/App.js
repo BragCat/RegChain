@@ -26,6 +26,8 @@ const App = () => {
         // Use web3 to get the user's accounts.
         const accounts = await web3.eth.getAccounts();
 
+        //console.log(accounts[0]);
+
         // Get the contract instance.
         const networkId = await web3.eth.net.getId();
         const deployedNetwork = SMARegisterContract.networks[networkId];
@@ -36,7 +38,6 @@ const App = () => {
 
         // Set web3, accounts, and contract to the state, and then proceed with an
         // example of interacting with the contract's methods.
-        //this.setState({ web3, accounts, contract: instance }, this.runExample);
         setState({ web3, accounts, contract: instance});
       } catch (error) {
         // Catch any errors for any of the above operations.
@@ -48,19 +49,6 @@ const App = () => {
     };
     init();
   }, []);
-
-  const runExample = async () => {
-    const { accounts, contract } = this.state;
-
-    // Stores a given value, 5 by default.
-    await contract.methods.set(5).send({ from: accounts[0] });
-
-    // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call();
-
-    // Update state with the result.
-    this.setState({ storageValue: response });
-  };
 
   const useStyles = makeStyles({
     root: {
@@ -86,8 +74,8 @@ const App = () => {
               </Toolbar>
           </AppBar>
 
-          <Route path="/" exact component={Home} />
-          <Route path="/new/" component={ASUpdate}/>
+          <Route path="/" exact render={(props) => <Home {...props} eth={state} />}/>
+          <Route path="/new/" render={(props) => <ASUpdate {...props} eth={state} />}/>
       </div>
     </Router>
   );

@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
-const ASUpdate = () => {
-    const [type, setType] = useState("update");
-    const [asn, setAsn] = useState("");
-    const [acsAddr, setAcsAddr] = useState("");
-    const [effectTime, setEffectTime] = useState("");
+const ASUpdate = (props) => {
+    const web3 = props.eth.web3;
+    const accounts = props.eth.accounts;
+    const contract = props.eth.contract;
+
+    const [ type, setType ] = useState("update");
+    const [ asn, setAsn ] = useState("");
+    const [ acsAddr, setAcsAddr ] = useState("");
+    const [ effectTime, setEffectTime ] = useState("");
+
+    console.log(accounts[0]);
 
     function handleTypeChange(event) {
         setType(event.target.value);
@@ -22,11 +28,22 @@ const ASUpdate = () => {
         setEffectTime(event.target.value);
     }
 
-    function handleSubmit(event) {
+    const handleSubmit = async (event) => {
         console.log(type);
         console.log(asn);
         console.log(acsAddr);
         console.log(effectTime);
+
+        const tx = await contract.methods.ASUpdate(
+            type, 
+            asn, 
+            acsAddr, 
+            effectTime
+            ).send({ 
+                from: accounts[0]
+            });
+
+        alert('Successfully submit update!');
         event.preventDefault();
     }
 
