@@ -46,3 +46,7 @@ body {
   width: 300px !important;
   margin-left: 3px;
 }
+
+.main-container {
+  margin: 20px;
+}

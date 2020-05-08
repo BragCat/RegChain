@@ -70,12 +70,12 @@ const App = () => {
                   <Typography variant={"h6"} color={"inherit"}>
                       <NavLink className={"nav-link"} to="/">Home</NavLink>
                   </Typography>
-                  <NavLink className={"nav-link"} to="/new/">AS Update</NavLink>
+                  <NavLink className={"nav-link"} to="/update/">AS Update</NavLink>
               </Toolbar>
           </AppBar>
 
           <Route path="/" exact render={(props) => <Home {...props} eth={state} />}/>
-          <Route path="/new/" render={(props) => <ASUpdate {...props} eth={state} />}/>
+          <Route path="/update/" render={(props) => <ASUpdate {...props} eth={state} />}/>
       </div>
     </Router>
   );

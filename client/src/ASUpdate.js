@@ -11,16 +11,18 @@ const ASUpdate = (props) => {
     const [ effectTime, setEffectTime ] = useState("");
 
     const handleSubmit = async (event) => {
-        console.log(type);
-        console.log(asn);
-        console.log(acsAddr);
-        console.log(effectTime);
+        event.preventDefault();
 
         try{
             const typeValue = parseInt(type);       
             const asnValue = parseInt(asn);
             const acsAddrValue = acsAddr;
             const effectTimeValue = parseInt(effectTime);
+            console.log(typeValue);
+            console.log(asnValue);
+            console.log(acsAddrValue);
+            console.log(effectTimeValue);
+            console.log(accounts[0]);
             const tx = await contract.methods.ASUpdate(
                 typeValue, 
                 asnValue, 
@@ -29,11 +31,12 @@ const ASUpdate = (props) => {
                 ).send({ 
                     from: accounts[0]
                 });
+                /*
             alert('Successfully submit update!');
+            */
         } catch (error) {
             console.error(error);
         } 
-        event.preventDefault();
     }
 
     return (
