@@ -25,13 +25,13 @@ const Home = (props) => {
     const classes = useStyles();
 
     const init = async () => {
-        const updateApps = await contract.methods.UpdateQuery().call();
-        setApps(updateApps);
+        //const updateApps = await contract.methods.requestQuery().call();
+        //setApps(updateApps);
     };
     
     useEffect(() => {
         init();
-    }, []);
+    }, [])
 
     const displayUpdateApps = () => {
         return apps.map((app) => {
