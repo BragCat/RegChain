@@ -12,7 +12,6 @@ import SMARegisterContract from "./contracts/SMARegister.json";
 import Home from "./Home";
 import Review from "./Review";
 import Request from "./Request";
-import Update from "./Update";
 
 import "./App.css";
 
@@ -34,8 +33,8 @@ const App = () => {
             const networkId = await web3.eth.net.getId();
             const deployedNetwork = SMARegisterContract.networks[networkId];
             const instance = new web3.eth.Contract(
-            SMARegisterContract.abi,
-            deployedNetwork && deployedNetwork.address,
+                SMARegisterContract.abi,
+                deployedNetwork && deployedNetwork.address,
             );
 
             // Set web3, accounts, and contract to the state, and then proceed with an
@@ -72,14 +71,12 @@ const App = () => {
                     <NavLink className={"nav-link"} to="/">自治域查询</NavLink>
                     <NavLink className={"nav-link"} to="/request/">自治域变更</NavLink>
                     <NavLink className={"nav-link"} to="/review/">自治域变更审批</NavLink>
-                    <NavLink className={"nav-link"} to="/update/">ACS信息更新</NavLink>
                 </Toolbar>
             </AppBar>
 
             <Route path="/" exact render={(props) => <Home {...props} eth={state} />}/>
             <Route path="/review/" exact render={(props) => <Review {...props} eth={state} />}/>
             <Route path="/request/" render={(props) => <Request {...props} eth={state} />}/>
-            <Route path="/update/" render={(props) => <Update {...props} eth={state} />}/>
         </div>
         </Router>
     );

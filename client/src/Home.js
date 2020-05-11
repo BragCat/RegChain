@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import AppCard from './AppCard';
+import ASCard from './ASCard.js';
 
 const useStyles = makeStyles(theme => ({
     button: {
@@ -11,8 +11,7 @@ const useStyles = makeStyles(theme => ({
     input: {
         display: 'none',
     },
-    })
-);
+}));
 
 
 const Home = (props) => {
@@ -20,25 +19,30 @@ const Home = (props) => {
     const accounts = props.eth.accounts;
     const contract = props.eth.contract; 
 
-    const [apps, setApps] = useState([]);
+    const [ases, setAses] = useState([]);
 
     const classes = useStyles();
 
     const init = async () => {
-        //const updateApps = await contract.methods.requestQuery().call();
-        //setApps(updateApps);
+        try {
+            const ases = await contract.methods.asQuery().call();
+            console.log(ases);
+            setAses(ases);
+        } catch (error) {
+            //alert("Call contract asQuery failed!");
+            console.log(error);
+        }
     };
     
     useEffect(() => {
         init();
     }, [])
 
-    const displayUpdateApps = () => {
-        return apps.map((app) => {
-            return (<AppCard
-                eth = {props.eth}
-                app = {app}
-                key = {app}
+    const displayAses = () => {
+        return ases.map((asInfo) => {
+            return (<ASCard
+                asInfo = {asInfo}
+                key = {asInfo}
             />
             );
         });
@@ -46,7 +50,7 @@ const Home = (props) => {
 
     return (
         <div className="main-container">
-            {displayUpdateApps()}
+            {displayAses()}
         </div>
     );
 }

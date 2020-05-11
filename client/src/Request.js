@@ -8,7 +8,6 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import { makeStyles } from '@material-ui/core/styles';
 
-
 const useStyles = makeStyles((theme) => ({
     formControl: {
         margin: theme.spacing(1),
@@ -41,15 +40,14 @@ const Request = (props) => {
             console.log(typeValue);
             console.log(asnValue);
             console.log(accounts[0]);
+            console.log(contract);
             const tx = await contract.methods.createASRequest(
                 typeValue, 
                 asnValue, 
-                ).send({ 
-                    from: accounts[0]
-                });
-                /*
+            ).send({ 
+                from: accounts[0]
+            });
             alert('Successfully submit update!');
-            */
         } catch (error) {
             console.error(error);
         } 
@@ -78,14 +76,12 @@ const Request = (props) => {
             >
             </TextField>
             </FormControl>
-            <FormControl className={classes.FormControl}>
             <Button 
                 className={classes.button}
                 onClick={handleSubmit} 
             >
                 提交
             </Button>
-            </FormControl>
         </div>
     );
 }
