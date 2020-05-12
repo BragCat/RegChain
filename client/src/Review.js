@@ -43,6 +43,10 @@ const Review = (props) => {
         }
     };
 
+    window.ethereum.on('accountsChanged', function (accounts) {
+        window.location.reload()
+    });
+
     const displayReqs = () => {
         return reqs.map((req) => {
             return (

@@ -38,6 +38,10 @@ const Home = (props) => {
         init();
     }, [])
 
+    window.ethereum.on('accountsChanged', function (accounts) {
+        window.location.reload()
+    });
+
     const displayAses = () => {
         return ases.map((asInfo) => {
             return (<ASCard

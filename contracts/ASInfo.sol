@@ -45,10 +45,10 @@ contract ASInfo {
 
     function updateACS(string memory acs, uint256 time) public onlyOwner {
         uint256 index = _acses.length;
-        while (_acses[index].time >= time) {
+        while (index > 0 && _acses[index - 1].time >= time) {
             --index;
         }
-        while (_acses.length > index + 1) {
+        while (_acses.length > index) {
             _acses.pop();
         }
         _acses.push(AcsTime(acs, time));

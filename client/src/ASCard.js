@@ -38,7 +38,7 @@ const useStyles = makeStyles(theme => ({
     },
     card: {
         width: 250,
-        height: 200
+        height: 170,
     },
     media: {
         height: 140,
@@ -102,7 +102,7 @@ const ASCard = (props) => {
     };
 
     window.ethereum.on('accountsChanged', function (accounts) {
-        window.location.reload()
+        window.location.reload();
     });
 
     const handleOpen = () => {
@@ -116,6 +116,8 @@ const ASCard = (props) => {
     const submitUpdate = async () => {
         try {
             const effectTime = parseInt(time);
+            console.log(acs);
+            console.log(effectTime);
             await contract.methods.updateACS(
                 acs,
                 effectTime
@@ -123,6 +125,8 @@ const ASCard = (props) => {
                 from: accounts[0]
             });
             alert("Update ACS information succeeded!");
+            setOpen(false);
+            window.location.reload();
         } catch (error) {
             alert("Update ACS information failed!");
             console.error(error);
