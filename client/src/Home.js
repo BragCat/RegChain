@@ -29,7 +29,7 @@ const Home = (props) => {
             console.log(ases);
             setAses(ases);
         } catch (error) {
-            //alert("Call contract asQuery failed!");
+            alert("Call contract asQuery failed!");
             console.log(error);
         }
     };
@@ -41,6 +41,7 @@ const Home = (props) => {
     const displayAses = () => {
         return ases.map((asInfo) => {
             return (<ASCard
+                eth = {props.eth}
                 asInfo = {asInfo}
                 key = {asInfo}
             />

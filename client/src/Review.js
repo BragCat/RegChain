@@ -35,6 +35,7 @@ const Review = (props) => {
             for (let i = 0; i < ids.length; ++i) {
                 reqs.push({id: ids[i], reqType: reqTypes[i], asn: asns[i]});
             } 
+            console.log(reqs);
             setReqs(reqs);
         } catch (error) {
             alert("Call contract requestQuery failed!");
@@ -46,6 +47,7 @@ const Review = (props) => {
         return reqs.map((req) => {
             return (
                 <RequestCard 
+                    eth={props.eth}
                     request={req}
                     key={req}
                 />

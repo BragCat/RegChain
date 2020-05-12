@@ -13,7 +13,8 @@ contract SMARegister {
     }
 
     struct ASRequest {
-        address id;
+        address owner;
+        bytes20 id;
         uint256 reqType;
         uint256 asn;
     }
@@ -39,6 +40,14 @@ contract SMARegister {
         owner = msg.sender;
     }
 
+    function toBytes(address x) public pure returns (bytes20) {
+        bytes20 b;
+        for (uint i = 0; i < 20; i++) {
+            b |= bytes20(byte(uint8(uint256(x) / (2 ** (8 * (19 - i))))) & 0xFF) >> (i * 8);
+        }
+        return b;
+    }
+
     function createASRequest(
         uint256 _reqType,
         uint256 _asn
@@ -47,6 +56,7 @@ contract SMARegister {
     {
         ASRequest memory req = ASRequest(
             msg.sender,
+            toBytes(msg.sender),
             _reqType,
             _asn
         );
@@ -55,11 +65,11 @@ contract SMARegister {
     }
 
     function requestQuery() public view returns (
-        address[] memory ids,
+        bytes20[] memory ids,
         uint256[] memory reqTypes,
         uint256[] memory asns)
     {
-        ids = new address[](_reqs.length);
+        ids = new bytes20[](_reqs.length);
         reqTypes = new uint256[](_reqs.length);
         asns = new uint256[](_reqs.length);
         for (uint256 i = 0; i < _reqs.length; ++i) {
@@ -82,7 +92,7 @@ contract SMARegister {
         return _ases.length;
     }
 
-    function findIndexFromReqs(address id) private view returns (uint256){
+    function findIndexFromReqs(bytes20 id) private view returns (uint256){
         for (uint256 i = 0; i < _reqs.length; ++i) {
             if (_reqs[i].id == id) {
                 return i;
@@ -98,7 +108,7 @@ contract SMARegister {
         _reqs.pop();
     }
 
-    function findIndexFromAses(address id) private view returns (uint256){
+    function findIndexFromAses(bytes20 id) private view returns (uint256){
         for (uint256 i = 0; i < _ases.length; ++i) {
             if (_ases[i].id() == id) {
                 return i;
@@ -114,34 +124,35 @@ contract SMARegister {
         _ases.pop();
     }
 
-    function requestApprove(address id) public onlyOwner {
+    function requestApprove(bytes20 id) public onlyOwner {
         uint256 index = findIndexFromReqs(id);
         ASRequest memory req = _reqs[index];
         removeFromReqs(index);
         if (req.reqType == 0) {
             ASInfo asInfo = new ASInfo(
+                req.owner,
                 req.id,
                 req.asn
             );
             _ases.push(asInfo);
-            emit ASCreated(asInfo, req.id);
+            emit ASCreated(asInfo, req.owner);
         } else {
             index = findIndexFromAses(req.id);
             ASInfo asInfo = _ases[index];
             removeFromAses(index);
-            emit ASDeleted(asInfo, req.id);
+            emit ASDeleted(asInfo, req.owner);
         }
-        emit ASRequestApproved(req.reqType, req.asn, req.id);
+        emit ASRequestApproved(req.reqType, req.asn, req.owner);
     }
 
-    function requestReject(address id) public onlyOwner {
+    function requestReject(bytes20 id) public onlyOwner {
         uint256 index = findIndexFromReqs(id);
         ASRequest memory req = _reqs[index];
         removeFromReqs(index);
-        emit ASRequestRejected(req.reqType, req.asn, req.id);
+        emit ASRequestRejected(req.reqType, req.asn, req.owner);
     }
 
-    function singleACSQuery(uint256 asn, uint256 time) public view returns(uint256) {
+    function singleACSQuery(uint256 asn, uint256 time) public view returns(string memory) {
         for (uint256 i = 0; i < _ases.length; ++i) {
             if (_ases[i].asn() == asn) {
                 return _ases[i].getCurrentACS(time);
@@ -150,13 +161,15 @@ contract SMARegister {
         assert(false);
     }
 
-    function allACSQuery(uint256 time) public view returns(uint256[] memory asns, uint256[] memory addrs) {
+    /*
+    function allACSQuery(uint256 time) public view returns(uint256[] memory asns, string[] memory addrs) {
         asns = new uint256[](_ases.length);
-        addrs = new uint256[](_ases.length);
+        addrs = new string[](_ases.length);
         for (uint256 i = 0; i < _ases.length; ++i) {
             asns[i] = _ases[i].asn();
             addrs[i] = _ases[i].getCurrentACS(time);
         }
         return (asns, addrs);
     }
+    */
 }

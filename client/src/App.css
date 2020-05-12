@@ -50,3 +50,17 @@ body {
 .main-container {
   margin: 20px;
 }
+
+.as-card-container {
+    display: inline-flex;
+    width: 250px;
+    height: 250px;
+    margin: 20px;
+}
+
+.request-card-container {
+    display: inline-flex;
+    width: 250px;
+    height: 250px;
+    margin: 20px;
+}

@@ -32,8 +32,6 @@ const Request = (props) => {
     const [ asn, setAsn ] = useState("");
 
     const handleSubmit = async (event) => {
-        event.preventDefault();
-
         try{
             const typeValue = parseInt(type);       
             const asnValue = parseInt(asn);
