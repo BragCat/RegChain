@@ -17,18 +17,24 @@ contract ASInfo {
     address public owner;
     bytes20 public id;
     uint256 public asn;
+    string public name;
+    string public description;
     AcsTime[] private _acses;
 
     constructor(
         address _owner,
         bytes20 _id,
-        uint256 _asn
+        uint256 _asn,
+        string memory _name,
+        string memory _description
     )
         public
     {
         owner = _owner;
         id = _id;
         asn = _asn;
+        name = _name;
+        description = _description;
     }
 
     function getCurrentACS(uint256 time) public view returns(string memory) {

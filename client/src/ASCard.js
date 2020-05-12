@@ -63,6 +63,8 @@ const ASCard = (props) => {
     const [ isOwner, setIsOwner ] = useState(false);
 
     const [ asn, setAsn ] = useState(null);
+    const [ name, setName ] = useState(null);
+    const [ description, setDescription ] = useState(null);
     const [ curAcs, setCurAcs ] = useState(null);
     const [ acs, setAcs ] = useState("");
     const [ time, setTime ] = useState("");
@@ -86,8 +88,12 @@ const ASCard = (props) => {
             setContract(contract);
 
             const asn = await contract.methods.asn().call();
+            const name = await contract.methods.name().call();
+            const description = await contract.methods.description().call();
             const curAcs = await contract.methods.getCurrentACS(Math.round(Date.now() / 1000)).call();
             setAsn(asn);
+            setName(name);
+            setDescription(description);
             setCurAcs(curAcs);
 
             const user = accounts[0].toLowerCase();
@@ -142,6 +148,8 @@ const ASCard = (props) => {
                 <DialogContent>
                     <p>自治域号：{asn}</p>
                     <p>当前ACS地址：{curAcs}</p>
+                    <p>自治域名：{name}</p>
+                    <p>描述：{description}</p>
                     {isOwner && 
                     <div>
                         <FormControl className={classes.formControl}>
@@ -158,16 +166,15 @@ const ASCard = (props) => {
                             onChange={(e) => {setTime(e.target.value)}}
                         />
                         </FormControl>
-                        <Button
-                            onClick={submitUpdate}  
-                            variant="contained"
-                        >
-                            提交
-                        </Button>
                     </div>
                     }
                 </DialogContent>
                 <DialogActions>
+                    {isOwner &&
+                    <Button onClick={submitUpdate} color="primary">
+                        提交
+                    </Button>
+                    }
                     <Button onClick={handleClose} color="primary">
                         取消
                     </Button>

@@ -30,6 +30,8 @@ const Request = (props) => {
 
     const [ type, setType ] = useState("");
     const [ asn, setAsn ] = useState("");
+    const [ name, setName ] = useState("");
+    const [ description, setDescription ] = useState("");
 
     const handleSubmit = async (event) => {
         try{
@@ -42,6 +44,8 @@ const Request = (props) => {
             const tx = await contract.methods.createASRequest(
                 typeValue, 
                 asnValue, 
+                name, 
+                description
             ).send({ 
                 from: accounts[0]
             });
@@ -57,8 +61,9 @@ const Request = (props) => {
     });
 
     return (
-        <div>
+        <div className="main-container">
             <h2>自治域变更请求</h2>
+            <div>
             <FormControl required className={classes.FormControl}>
             <InputLabel>变更类型</InputLabel>
             <Select 
@@ -70,6 +75,8 @@ const Request = (props) => {
                 <MenuItem value="1">删除</MenuItem>
             </Select>
             </FormControl>
+            </div>
+            <div>
             <FormControl className={classes.FormControl}>
             <TextField 
                 required
@@ -79,9 +86,34 @@ const Request = (props) => {
             >
             </TextField>
             </FormControl>
+            </div>
+            <div>
+            <FormControl className={classes.FormControl}>
+            <TextField 
+                required
+                label="自治域名"
+                value={name} 
+                onChange={(e) => {setName(e.target.value)}}
+            >
+            </TextField>
+            </FormControl>
+            </div>
+            <div>
+            <FormControl className={classes.FormControl}>
+            <TextField 
+                required
+                label="描述"
+                value={description} 
+                onChange={(e) => {setDescription(e.target.value)}}
+            >
+            </TextField>
+            </FormControl>
+            </div>
             <Button 
                 className={classes.button}
                 onClick={handleSubmit} 
+                variant="contained"
+                color="primary"
             >
                 提交
             </Button>

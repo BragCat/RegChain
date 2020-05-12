@@ -47,8 +47,8 @@ const useStyles = makeStyles(theme => ({
         display: 'table-cell'
     },
     card: {
-        width: 250,
-        height: 150
+        width: 400,
+        height: 230
     },
     media: {
         height: 140,
@@ -70,6 +70,8 @@ const RequestCard = (props) => {
     const id = props.request.id;
     const typeValue = props.request.reqType == 0 ? "注册" : "删除";
     const asn = props.request.asn;
+    const name = props.request.name;
+    const description = props.request.description;
 
     const classes = useStyles();
 
@@ -118,6 +120,15 @@ const RequestCard = (props) => {
                         </Typography>
                         <Typography variant="body2" color="textSecondary" component="p">
                             申请类型：{ typeValue }
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" component="p">
+                            自治域名：{ name }
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" component="p">
+                            描述：{ description }
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" component="p">
+                            申请账号：{ id }
                         </Typography>
                     </CardContent>
                 </CardActionArea>

@@ -17,6 +17,8 @@ contract SMARegister {
         bytes20 id;
         uint256 reqType;
         uint256 asn;
+        string name;
+        string description;
     }
 
     // administrator address of security aliance
@@ -30,7 +32,7 @@ contract SMARegister {
 
 
     // events
-    event ASRequestCreated(uint256 indexed reqType, uint256 indexed asn, address indexed id);
+    event ASRequestSubmitted(uint256 indexed reqType, uint256 indexed asn, address indexed id);
     event ASRequestApproved(uint256 indexed reqType, uint256 indexed asn, address indexed id);
     event ASRequestRejected(uint256 indexed reqType, uint256 indexed asn, address indexed id);
     event ASCreated(ASInfo indexed asInfo, address indexed id);
@@ -50,34 +52,60 @@ contract SMARegister {
 
     function createASRequest(
         uint256 _reqType,
-        uint256 _asn
+        uint256 _asn,
+        string memory _name,
+        string memory _description
     )
         public
     {
+        bytes20 id = toBytes(msg.sender);
         ASRequest memory req = ASRequest(
             msg.sender,
-            toBytes(msg.sender),
+            id,
             _reqType,
-            _asn
+            _asn,
+            _name,
+            _description
         );
-        _reqs.push(req);
-        emit ASRequestCreated(_reqType, _asn, msg.sender);
+        bool applied = false;
+        for (uint256 i = 0; i < _reqs.length; ++i) {
+            if (_reqs[i].id == id) {
+                _reqs[i] = req;
+                applied = true;
+                break;
+            }
+        }
+        if (!applied) {
+            _reqs.push(req);
+        }
+        emit ASRequestSubmitted(_reqType, _asn, msg.sender);
     }
 
-    function requestQuery() public view returns (
-        bytes20[] memory ids,
-        uint256[] memory reqTypes,
-        uint256[] memory asns)
-    {
+    function requestDetailQuery(bytes20 id) public view returns (
+        uint256 reqType,
+        uint256 asn,
+        string memory name,
+        string memory description
+    ) {
+        for (uint256 i = 0; i < _reqs.length; ++i) {
+            if (_reqs[i].id == id) {
+                return (
+                    _reqs[i].reqType,
+                    _reqs[i].asn,
+                    _reqs[i].name,
+                    _reqs[i].description
+                );
+            }
+        }
+        assert(false);
+    }
+
+    function requestIdQuery() public view returns (bytes20[] memory ids) {
         ids = new bytes20[](_reqs.length);
-        reqTypes = new uint256[](_reqs.length);
-        asns = new uint256[](_reqs.length);
         for (uint256 i = 0; i < _reqs.length; ++i) {
             ids[i] = _reqs[i].id;
-            reqTypes[i] = _reqs[i].reqType;
-            asns[i] = _reqs[i].asn;
         }
-        return (ids, reqTypes, asns);
+        return ids;
     }
 
     function requestCount() public view returns (uint256) {
@@ -132,7 +160,9 @@ contract SMARegister {
             ASInfo asInfo = new ASInfo(
                 req.owner,
                 req.id,
-                req.asn
+                req.asn,
+                req.name,
+                req.description
             );
             _ases.push(asInfo);
             emit ASCreated(asInfo, req.owner);

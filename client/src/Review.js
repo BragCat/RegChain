@@ -27,13 +27,17 @@ const Review = (props) => {
 
     const init = async () => {
         try {
-            let res = await contract.methods.requestQuery().call();
-            const ids = res.ids;
-            const reqTypes = res.reqTypes;
-            const asns = res.asns;
+            let ids = await contract.methods.requestIdQuery().call();
             let reqs = [];
             for (let i = 0; i < ids.length; ++i) {
-                reqs.push({id: ids[i], reqType: reqTypes[i], asn: asns[i]});
+                let res = await contract.methods.requestDetailQuery(ids[i]).call();
+                reqs.push({
+                    id: ids[i],
+                    reqType: res.reqType,
+                    asn: res.asn,
+                    name: res.name,
+                    description: res.description
+                });
             } 
             console.log(reqs);
             setReqs(reqs);

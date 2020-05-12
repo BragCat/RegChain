@@ -8,6 +8,7 @@ contract("SMARegister", accounts => {
     const acs = "2402:f000:6:1231::28:24";
     const time = 1588042095;
     const name = "Tsinghua University";
+    const description = "Tsinghua University";
     const admin = accounts[0];
     const applicant = accounts[1];
 
@@ -34,6 +35,8 @@ contract("SMARegister", accounts => {
             var tx = await SMARegister.createASRequest(
                 reqType, 
                 asn, 
+                name,
+                description,
                 {from: admin}
                 );
             const newReqsCount = await SMARegister.requestCount();
@@ -43,6 +46,8 @@ contract("SMARegister", accounts => {
             const tx = await SMARegister.createASRequest(
                 reqType, 
                 asn + 1, 
+                name,
+                description,
                 {from: accounts[1]}
                 );
         });
@@ -55,6 +60,8 @@ contract("SMARegister", accounts => {
                 const tx = await SMARegister.createASRequest(
                     reqType, 
                     asn + i,
+                    name,
+                    description,
                     {from: accounts[i]}
                     );
             }
@@ -64,8 +71,8 @@ contract("SMARegister", accounts => {
     }); 
 
     describe("AS request query", () => {
-        it("requestQuery time tester", async() => {
-            const reqs = await SMARegister.requestQuery();
+        it("requestIdQuery time tester", async() => {
+            const reqs = await SMARegister.requestIdQuery();
         });
     });
 
@@ -135,13 +142,13 @@ contract("SMARegister", accounts => {
 
     describe("Approve all AS requests", () => {
         it("Approve all AS requests", async() => {
-            const res = await SMARegister.requestQuery();
+            const ids = await SMARegister.requestIdQuery();
             const oldReqsCount = await SMARegister.requestCount();
             for (var i = 0; i < oldReqsCount; ++i) {
                 const tx = await SMARegister.requestApprove(
-                    res.ids[i],
+                    ids[i],
                     {from: admin}
-                    );
+                );
             }
             const newReqsCount = await SMARegister.requestCount();
             assert.equal(newReqsCount, 0, "There should be 0 request left.");
