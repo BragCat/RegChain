@@ -16,6 +16,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 
 import FilledInput from '@material-ui/core/FilledInput';
 import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import Input from '@material-ui/core/Input';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -36,8 +37,9 @@ const useStyles = makeStyles(theme => ({
         margin: theme.spacing(1),
         display: 'table-cell'
     },
+    
     card: {
-        width: 250,
+        width: 400,
         height: 170,
     },
     media: {
@@ -67,7 +69,7 @@ const ASCard = (props) => {
     const [ description, setDescription ] = useState(null);
     const [ curAcs, setCurAcs ] = useState(null);
     const [ acs, setAcs ] = useState("");
-    const [ time, setTime ] = useState("");
+    const [ time, setTime ] = useState("1970-01-01T00:00");
 
     const classes = useStyles();
 
@@ -121,8 +123,10 @@ const ASCard = (props) => {
 
     const submitUpdate = async () => {
         try {
-            const effectTime = parseInt(time);
+            const t = new Date(time);
+            const effectTime = t.getTime() / 1000;
             console.log(acs);
+            console.log(time);
             console.log(effectTime);
             await contract.methods.updateACS(
                 acs,
@@ -159,10 +163,13 @@ const ASCard = (props) => {
                             value={acs} 
                             onChange={(e) => {setAcs(e.target.value)}}
                         />
+                        </FormControl>
+                        <FormControl>
                         <TextField 
                             required
-                            label="生效时间" 
+                            label="生效时间"
                             value={time}
+                            type="datetime-local"
                             onChange={(e) => {setTime(e.target.value)}}
                         />
                         </FormControl>
@@ -187,7 +194,10 @@ const ASCard = (props) => {
                         <Typography gutterBottom variant="h5" component="h2">
                             自治域号：{asn}
                         </Typography>
-                        <Typography variant="body2" color="textSecondary" component="span">
+                        <Typography variant="body2" color="textSecondary" component="div">
+                            自治域名：{name}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary" component="div">
                             当前ACS地址：{curAcs}
                         </Typography>
                     </CardContent>

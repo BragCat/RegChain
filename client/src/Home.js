@@ -35,10 +35,11 @@ const Home = (props) => {
     };
     
     useEffect(() => {
+        document.title = "RegChain自治域查询";
         init();
     }, [])
 
-    window.ethereum.on('accountsChanged', function (accounts) {
+    window.ethereum.on("accountsChanged", function (accounts) {
         window.location.reload()
     });
 

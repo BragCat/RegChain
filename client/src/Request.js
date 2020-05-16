@@ -33,6 +33,10 @@ const Request = (props) => {
     const [ name, setName ] = useState("");
     const [ description, setDescription ] = useState("");
 
+    useEffect(() => {
+        document.title = "RegChain自治域变更";
+    }, []);
+
     const handleSubmit = async (event) => {
         try{
             const typeValue = parseInt(type);       
@@ -49,7 +53,7 @@ const Request = (props) => {
             ).send({ 
                 from: accounts[0]
             });
-            alert('Successfully submit update!');
+            alert('Successfully submit!');
             window.location.reload();
         } catch (error) {
             console.error(error);

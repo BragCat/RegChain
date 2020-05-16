@@ -22,6 +22,7 @@ const Review = (props) => {
     const [ reqs, setReqs ] = useState([]);
 
     useEffect(() => {
+        document.title = "RegChain自治域变更审批";
         init();
     }, []);
 
