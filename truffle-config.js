@@ -9,7 +9,7 @@ module.exports = {
     //   accounts: 10,
     //   defaultEtherBalance: 500,
     //   port: 8545
-    // }
+    // },
     development: {
         host: "127.0.0.1",
         port: 8545,

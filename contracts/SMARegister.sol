@@ -32,11 +32,11 @@ contract SMARegister {
 
 
     // events
-    event ASRequestSubmitted(uint256 indexed reqType, uint256 indexed asn, address indexed id);
-    event ASRequestApproved(uint256 indexed reqType, uint256 indexed asn, address indexed id);
-    event ASRequestRejected(uint256 indexed reqType, uint256 indexed asn, address indexed id);
-    event ASCreated(ASInfo indexed asInfo, address indexed id);
-    event ASDeleted(ASInfo indexed asInfo, address indexed id);
+    event ASRequestSubmitted(uint256 indexed reqType, uint256 indexed asn, address indexed account);
+    event ASRequestApproved(uint256 indexed reqType, uint256 indexed asn, address indexed account);
+    event ASRequestRejected(uint256 indexed reqType, uint256 indexed asn, address indexed account);
+    event ASCreated(ASInfo indexed asInfo, address indexed account);
+    event ASDeleted(ASInfo indexed asInfo, address indexed account);
 
     constructor() public {
         owner = msg.sender;
@@ -50,6 +50,15 @@ contract SMARegister {
         return b;
     }
 
+    function checkASNRegistered(uint256 asn) private view returns (bool) {
+        for (uint256 i = 0; i < _ases.length; ++i) {
+            if (_ases[i].asn() == asn) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function createASRequest(
         uint256 _reqType,
         uint256 _asn,
@@ -59,6 +68,11 @@ contract SMARegister {
         public
     {
         bytes20 id = toBytes(msg.sender);
+        if (_reqType == 0) {
+            require(!checkASNRegistered(_asn), "The AS number has been registered.");
+        } else {
+            require(checkASNRegistered(_asn), "The AS number was not found.");
+        }
         ASRequest memory req = ASRequest(
             msg.sender,
             id,

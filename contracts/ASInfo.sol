@@ -14,6 +14,8 @@ contract ASInfo {
         _;
     }
 
+    event ACSUpdated(string indexed acsAddr, uint256 indexed effectTime, address indexed account);
+
     address public owner;
     bytes20 public id;
     uint256 public asn;
@@ -58,5 +60,6 @@ contract ASInfo {
             _acses.pop();
         }
         _acses.push(AcsTime(acs, time));
+        emit ACSUpdated(acs, time, msg.sender);
     }
 }
