@@ -124,7 +124,7 @@ const ASCard = (props) => {
     const submitUpdate = async () => {
         try {
             const t = new Date(time);
-            const effectTime = t.getTime() / 1000;
+            const effectTime = Math.round(t.getTime() / 1000);
             console.log(acs);
             console.log(time);
             console.log(effectTime);
